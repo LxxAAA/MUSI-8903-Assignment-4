@@ -1,15 +1,22 @@
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
 
 class MyBarDecoder(torch.nn.Module):
-    def __init__(self, use_cuda=False):
+    def __init__(self, seq_len, z_dim, num_notes, use_cuda=False):
         super(MyBarDecoder, self).__init__()
         self.use_cuda = use_cuda
+        self.seq_len = seq_len
+        self.z_dim = z_dim
+        self.num_notes = num_notes
         #####################################
         # INSERT YOUR CODE HERE
         # initialize your VAE decoder model
         #####################################
-        pass
+        self.fc_1 = nn.Linear(self.z_dim, self.seq_len // 2)
+        self.fc_2 = nn.Linear(self.seq_len // 2, self.seq_len)
+        self.conv = nn.Conv1d(1, self.num_notes, 1)
         #####################################
         # END OF YOUR CODE
         #####################################
@@ -41,7 +48,11 @@ class MyBarDecoder(torch.nn.Module):
         # use the z to reconstruct the input
         # you may score_tensor if you are using a
         # recurrent decoder
-        pass
+        linear = F.sigmoid(self.fc_2(F.relu(self.fc_1(z))))
+        conv = self.conv(linear.unsqueeze(1))
+        weights = F.softmax(conv, dim=1).permute(0, 2, 1)
+        samples = torch.argmax(weights, dim=2)
+
         #####################################
         # END OF YOUR CODE
         #####################################

@@ -1,4 +1,6 @@
 import torch
+import torch.nn.functional as F
+import torch.nn as nn
 from tqdm import tqdm
 from utils.helpers import *
 
@@ -143,6 +145,7 @@ class VAETrainer(object):
             measure_score_tensor=score,
             train=train
         )
+
         # compute loss
         recons_loss = self.mean_crossentropy_loss(weights=weights, targets=score)
         kld_loss = self.compute_kld_loss(z_dist, prior_dist)
@@ -161,7 +164,14 @@ class VAETrainer(object):
         # INSERT YOUR CODE HERE
         # to update the learning rate
         ##################################
-        pass
+        DECAY = 0.0001
+        new_lr = None
+
+        for param_group in self.optimizer.param_groups:
+            # Basic decay
+            param_group['lr'] = param_group['lr'] * 1 / (1 + DECAY * epoch_num)
+            new_lr = param_group['lr']
+        print("New learning rate:", new_lr)
         ##################################
         # END OF YOUR CODE
         ##################################
@@ -181,8 +191,9 @@ class VAETrainer(object):
         # INSERT YOUR CODE HERE
         #####################################
         # define the loss criterion
-
         # compute a mean cross entropy loss
+        weights = weights.type(torch.FloatTensor).permute(0, 2, 1)
+        recons_loss = F.cross_entropy(weights, targets)
 
         #####################################
         # END OF YOUR CODE
@@ -204,6 +215,10 @@ class VAETrainer(object):
         # INSERT YOUR CODE HERE
         #####################################
         # compute the reconstruction accuracy
+        recon = weights.argmax(dim=2)
+        recon = recon.type(torch.LongTensor)
+        num_equal = torch.eq(recon, targets).sum()
+        accuracy = num_equal / targets.numel()
 
         #####################################
         # END OF YOUR CODE
@@ -225,6 +240,7 @@ class VAETrainer(object):
         # INSERT YOUR CODE HERE
         #####################################
         # compute the kl-divergence
+        kld_loss = beta * torch.mean(torch.distributions.kl.kl_divergence(z_dist, prior_dist))
 
         #####################################
         # END OF YOUR CODE

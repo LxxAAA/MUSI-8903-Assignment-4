@@ -1,5 +1,5 @@
 from random import randint
-
+import torch
 from utils.helpers import *
 from utils.trainer import VAETrainer
 
@@ -72,6 +72,12 @@ class VAETester(object):
         ##################################
         # find the interpolation points and run through decoder
         # concatenate to results concat_tensor_score
+        incr_difference = z2.sub(z1) / (n + 1)
+
+        for i in range(n):
+            interp_z = z1 + (incr_difference * (i + 1))
+            _, interp_sam = self.decoder(interp_z, dummy_score_tensor, self.train)
+            torch.cat((concat_tensor_score, interp_sam), 1)
 
         ##################################
         # END OF YOUR CODE
@@ -105,16 +111,24 @@ class VAETester(object):
         mean_loss = 0
         mean_accuracy = 0
         for sample_id, batch in enumerate(data_loader):
-            score_tensor = to_cuda_variable_long(score_tensor, self.use_cuda)
+            score_tensor = to_cuda_variable_long(batch[0], self.use_cuda)
             ##################################
             # INSERT YOUR CODE HERE
             # complete the steps below
             ##################################
             # compute forward pass of VAE model
+            weights, samples, z_dist, prior_dist = self.model(
+                measure_score_tensor=score_tensor,
+                train=False
+            )
 
             # compute reconstruction & kld losses
+            recons_loss = VAETrainer.mean_crossentropy_loss(weights=weights, targets=score_tensor)
+            kld_loss = VAETrainer.compute_kld_loss(z_dist, prior_dist)
+            mean_loss += recons_loss + kld_loss
 
             # compute accuracy
+            mean_accuracy += VAETrainer.mean_accuracy(weights=weights, targets=score_tensor)
             ##################################
             # END OF YOUR CODE
             ##################################

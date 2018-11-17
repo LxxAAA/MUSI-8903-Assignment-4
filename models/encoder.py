@@ -14,9 +14,9 @@ class MyBarEncoder(torch.nn.Module):
         # INSERT YOUR CODE HERE
         # initialize your VAE encoder model
         #####################################
-        self.fc_1 = nn.Linear(self.seq_len, self.seq_len / 2)
-        self.fc_21 = nn.Linear(self.seq_len / 2, self.z_dim)
-        self.fc_22 = nn.Linear(self.seq_len / 2, self.z_dim)
+        self.fc_1 = nn.Linear(self.seq_len, self.seq_len // 2)
+        self.fc_21 = nn.Linear(self.seq_len // 2, self.z_dim)
+        self.fc_22 = nn.Linear(self.seq_len // 2, self.z_dim)
         #####################################
         # END OF YOUR CODE
         #####################################
@@ -41,6 +41,7 @@ class MyBarEncoder(torch.nn.Module):
         # forward pass of the VAE encoder
         #####################################
         # initial embedding
+        score_tensor = score_tensor.type(torch.FloatTensor)
         embedded = F.relu(self.fc_1(score_tensor))
 
         # compute the mean
