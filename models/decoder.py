@@ -14,9 +14,13 @@ class MyBarDecoder(torch.nn.Module):
         # INSERT YOUR CODE HERE
         # initialize your VAE decoder model
         #####################################
-        self.fc_1 = nn.Linear(self.z_dim, self.seq_len // 2)
-        self.fc_2 = nn.Linear(self.seq_len // 2, self.seq_len)
+        self.linear = nn.Linear(self.z_dim, self.seq_len)
+        self.hidden_dim = 128
+        self.num_layers = 2
+        self.lstm = nn.LSTM(1, self.hidden_dim, self.num_layers, batch_first=True)
+        self.fc = nn.Linear(self.seq_len * self.hidden_dim, self.seq_len)
         self.conv = nn.Conv1d(1, self.num_notes, 1)
+        self.init_params()
         #####################################
         # END OF YOUR CODE
         #####################################
@@ -27,6 +31,18 @@ class MyBarDecoder(torch.nn.Module):
         :return: string, class representation
         """
         return 'MyBarDecoder'
+
+    def init_params(self):
+        for param in self.parameters():
+            param.data.uniform_(-0.05, 0.05)
+        return
+
+    def init_hidden_and_cell(self, batch_size):
+        hidden = torch.zeros((self.num_layers, batch_size, self.hidden_dim))
+        cell = torch.zeros((self.num_layers, batch_size, self.hidden_dim))
+        if self.use_cuda and torch.cuda.is_available():
+            hidden, cell = hidden.cuda(), cell.cuda()
+        return hidden, cell
 
     def forward(self, z, score_tensor, train):
         """
@@ -48,10 +64,15 @@ class MyBarDecoder(torch.nn.Module):
         # use the z to reconstruct the input
         # you may score_tensor if you are using a
         # recurrent decoder
-        linear = F.sigmoid(self.fc_2(F.relu(self.fc_1(z))))
-        conv = self.conv(linear.unsqueeze(1))
+
+        h0, c0 = self.init_hidden_and_cell(z.size(0))
+        linear_out = self.linear(z)
+        lstm_out, _ = self.lstm(linear_out.unsqueeze(-1), (h0, c0))
+        fc_out = self.fc(lstm_out.contiguous().view(z.size(0), -1))
+        conv = self.conv(fc_out.unsqueeze(1))
         weights = F.softmax(conv, dim=1).permute(0, 2, 1)
         samples = torch.argmax(weights, dim=2)
+
 
         #####################################
         # END OF YOUR CODE

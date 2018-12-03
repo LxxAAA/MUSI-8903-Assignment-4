@@ -98,6 +98,7 @@ class VAETester(object):
         z1 = z_dist1.loc
         z2 = z_dist2.loc
         tensor_score = self.decode_mid_point(z1, z2, n)
+        print(tensor_score)
         score = self.dataset.get_score_from_tensor(tensor_score.cpu())
         score.show()
         return score

@@ -28,7 +28,7 @@ class MyBarVAE(nn.Module):
         # you may declare and pass arguments below
         # for your encoder & decoder
         # do NOT the change the names below though
-        self.encoder = MyBarEncoder(self.measure_seq_len, self.z_dim, use_cuda=self.use_cuda)
+        self.encoder = MyBarEncoder(self.measure_seq_len, self.z_dim, self.num_notes, use_cuda=self.use_cuda)
         self.decoder = MyBarDecoder(self.measure_seq_len, self.z_dim, self.num_notes, use_cuda=self.use_cuda)
         #####################################
         # END OF YOUR CODE
@@ -80,11 +80,10 @@ class MyBarVAE(nn.Module):
 
         # compute prior distribution
         # should also be a torch.distributions object
-        prior_dist = distributions.Normal(torch.mean(measure_score_tensor), torch.std(measure_score_tensor))
+        prior_dist = distributions.Normal(torch.zeros(self.z_dim), torch.ones(self.z_dim))
         #####################################
         # END OF YOUR CODE
         #####################################
-
         # compute output of the decoder
         weights, samples = self.decoder(
             z=z_tilde,

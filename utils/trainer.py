@@ -103,7 +103,6 @@ class VAETrainer(object):
         mean_accuracy = 0
         for sample_id, batch in tqdm(enumerate(data_loader)):
             # process batch data
-            # process batch data
             batch_data = to_cuda_variable_long(batch[0], self.use_cuda)
 
             # zero the gradients
@@ -150,6 +149,7 @@ class VAETrainer(object):
         recons_loss = self.mean_crossentropy_loss(weights=weights, targets=score)
         kld_loss = self.compute_kld_loss(z_dist, prior_dist)
         loss = recons_loss + kld_loss
+
         # compute accuracy
         accuracy = self.mean_accuracy(weights=weights, targets=score)
         return loss, accuracy
@@ -193,7 +193,7 @@ class VAETrainer(object):
         # define the loss criterion
         # compute a mean cross entropy loss
         weights = weights.type(torch.FloatTensor).permute(0, 2, 1)
-        recons_loss = F.cross_entropy(weights, targets)
+        recons_loss = torch.nn.CrossEntropyLoss()(weights, targets).mean()
 
         #####################################
         # END OF YOUR CODE
@@ -217,8 +217,9 @@ class VAETrainer(object):
         # compute the reconstruction accuracy
         recon = weights.argmax(dim=2)
         recon = recon.type(torch.LongTensor)
-        num_equal = torch.eq(recon, targets).sum()
-        accuracy = num_equal / targets.numel()
+        num_equal = torch.eq(recon, targets)
+        total_equal = num_equal.sum()
+        accuracy = torch.tensor(float(total_equal) / targets.numel())
 
         #####################################
         # END OF YOUR CODE
