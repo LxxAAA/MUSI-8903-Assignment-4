@@ -138,11 +138,6 @@ class VAETrainer(object):
         :param train: bool, True is backward pass is to be performed
         :return: scalar loss value, scalar accuracy value
         """
-        ### DEBUGGING CODE
-        # hist = batch.float().histc(bins=40, min=0, max=39)
-        # pct_21 = hist[21] / torch.numel(batch.float())
-        # print('pct_21: %.5f' % pct_21)
-        ### 
         score = batch
         # perform forward pass of model
         weights, samples, z_dist, prior_dist = self.model(
@@ -198,7 +193,6 @@ class VAETrainer(object):
         #####################################
         # define the loss criterion
         # compute a mean cross entropy loss
-    
         vocab_size = int(weights.size()[-1])
         weighting = torch.ones([vocab_size])
         weighting[21] = 0.2 # fuck note continuations

@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import pdb
 
 class MyBarDecoder(torch.nn.Module):
     def __init__(self, seq_len, z_dim, num_notes, use_cuda=False):

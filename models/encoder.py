@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Normal
 
-import pdb
 
 class MyBarEncoder(torch.nn.Module):
     def __init__(self, seq_len, z_dim, num_notes, use_cuda=False):
@@ -42,7 +41,6 @@ class MyBarEncoder(torch.nn.Module):
         #####################################
         # END OF YOUR CODE
         #####################################
-
     def __repr__(self):
         """
         String Representation of class
@@ -74,12 +72,9 @@ class MyBarEncoder(torch.nn.Module):
         # INSERT YOUR CODE HERE
         # forward pass of the VAE encoder
         #####################################
-        # initial embedding
-        # pdb.set_trace() 
         h0, c0 = self.init_hidden_and_cell(score_tensor.size(0))
         score_tensor = score_tensor.type(torch.LongTensor)
 
-        # pdb.set_trace()
         embedded = F.relu(self.embedder(score_tensor))
         encoded = F.relu(self.conv1(embedded.unsqueeze(1)))
         encoded = F.relu(self.conv2(encoded.permute(0, 3, 1, 2)))
