@@ -13,7 +13,7 @@ parser.add_argument('--lr', type=float, metavar='LR', default=0.001,
 parser.add_argument('--num_epochs', type=int, metavar='N', default=10,
                     help='number of epochs to train')
 parser.add_argument('--batch_size', default=128)
-parser.add_argument('--train', default=True)
+parser.add_argument('--train', default=False)
 # Other configuration
 parser.add_argument('--no-cuda', action='store_true', default=True,
                     help='disables CUDA training')
