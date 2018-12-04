@@ -82,11 +82,11 @@ class MyBarDecoder(torch.nn.Module):
             lstm_out, (h, c) = self.lstm(encoded, (h, c))
             # full_lstm_out = torch.cat([full_lstm_out, lstm_out], dim=1)
             decoded = self.fc_decode_2(F.relu(self.fc_decode_1(lstm_out)))
+            weights.append(F.log_softmax(decoded, dim=-1))
+
             distr = F.softmax(decoded, dim=2)
-            weights.append(distr)
             samples.append(distr.squeeze(1).multinomial(1))
 
-        # pdb.set_trace()
         # weights = F.softmax(decoded, dim=2)
         # samples = weights.multinomial(1)
         weights = torch.cat(weights, dim=1)

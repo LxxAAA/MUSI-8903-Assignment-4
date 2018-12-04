@@ -21,13 +21,16 @@ class MyBarEncoder(torch.nn.Module):
         self.num_dirs = 2
         self.num_layers = 2
         
+        # batch_size x seq_len x 1
         self.embedder = nn.Embedding(num_notes, self.embedding_dim)
-
-        # mid = (self.embedding_dim + self.hidden_dim) // 2
-        self.fc_encode = nn.Linear(self.embedding_dim, self.hidden_dim)
-        # self.fc_encode_2 = nn.Linear(mid, self.hidden_dim)
-
-        self.lstm = nn.LSTM(self.hidden_dim, self.hidden_dim, self.num_layers, 
+        # batch_size x seq_len x embedding_dim -> batch_size x 1 x seq_len x embedding_dim
+        self.conv1 = nn.Conv2d(1, 3, kernel_size=(13, self.embedding_dim), padding=(6, 0))
+        # batch_size x 3 x seq_len x 1 -> batch_size x 1 x 3 x seq_len
+        self.conv2 = nn.Conv2d(1, 1, kernel_size=(3, 3), stride=2, padding=(0, 1))
+        # batch_size x 1 x seq_len / 2 -> batch_size x seq_len / 2 x 1
+        self.fc_expand = nn.Linear(1, self.hidden_dim // 2)
+        # batch_size x 1 x seq_len / 2 -> batch_size x seq_len / 2 x 1
+        self.lstm = nn.LSTM(self.hidden_dim // 2, self.hidden_dim, self.num_layers, 
                 batch_first=True, bidirectional=(self.num_dirs == 2))
 
         mid_point = (self.hidden_dim * self.num_dirs + self.z_dim) // 2
@@ -72,16 +75,19 @@ class MyBarEncoder(torch.nn.Module):
         # forward pass of the VAE encoder
         #####################################
         # initial embedding
-        # pdb.set_trace()
         # pdb.set_trace() 
         h0, c0 = self.init_hidden_and_cell(score_tensor.size(0))
         score_tensor = score_tensor.type(torch.LongTensor)
 
-        embedded = self.embedder(score_tensor)
-        # encoded = self.fc_encode_2(F.relu(self.fc_encode_1(embedded)))
-        encoded = self.fc_encode(embedded)
+        # pdb.set_trace()
+        embedded = F.relu(self.embedder(score_tensor))
+        encoded = F.relu(self.conv1(embedded.unsqueeze(1)))
+        encoded = F.relu(self.conv2(encoded.permute(0, 3, 1, 2)))
+        encoded = self.fc_expand(encoded.squeeze(1).permute(0, 2, 1)) 
+
         lstm_out, _ = self.lstm(encoded, (h0, c0))
         lstm_out = lstm_out.contiguous()[:, -1, :].unsqueeze(1)
+
         # compute the mean
         mu = self.fc_mean(F.relu(self.fc_decode_1(lstm_out)))
         # compute the logvar

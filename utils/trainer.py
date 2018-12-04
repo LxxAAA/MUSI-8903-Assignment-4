@@ -139,9 +139,9 @@ class VAETrainer(object):
         :return: scalar loss value, scalar accuracy value
         """
         ### DEBUGGING CODE
-        hist = batch.float().histc(bins=40, min=0, max=39)
-        pct_21 = hist[21] / torch.numel(batch.float())
-        print('pct_21: %.5f' % pct_21)
+        # hist = batch.float().histc(bins=40, min=0, max=39)
+        # pct_21 = hist[21] / torch.numel(batch.float())
+        # print('pct_21: %.5f' % pct_21)
         ### 
         score = batch
         # perform forward pass of model
@@ -176,6 +176,7 @@ class VAETrainer(object):
             # Basic decay
             param_group['lr'] = param_group['lr'] * 1 / (1 + DECAY * epoch_num)
             new_lr = param_group['lr']
+
         print("New learning rate:", new_lr)
         ##################################
         # END OF YOUR CODE
@@ -197,9 +198,12 @@ class VAETrainer(object):
         #####################################
         # define the loss criterion
         # compute a mean cross entropy loss
-        weights = weights.type(torch.FloatTensor).permute(0, 2, 1)
-        recons_loss = torch.nn.CrossEntropyLoss()(weights, targets).mean()
-
+    
+        vocab_size = int(weights.size()[-1])
+        weighting = torch.ones([vocab_size])
+        weighting[21] = 0.2 # fuck note continuations
+        loss_fn = nn.NLLLoss(weight=weighting)
+        recons_loss = torch.nn.NLLLoss()(weights.view(-1, weights.size()[-1]), targets.view(-1))
         #####################################
         # END OF YOUR CODE
         #####################################
@@ -247,7 +251,6 @@ class VAETrainer(object):
         #####################################
         # compute the kl-divergence
         kld_loss = beta * torch.mean(torch.distributions.kl.kl_divergence(z_dist, prior_dist))
-
         #####################################
         # END OF YOUR CODE
         #####################################
