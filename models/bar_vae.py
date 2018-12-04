@@ -23,7 +23,7 @@ class MyBarVAE(nn.Module):
         # initialize your VAE model
         #####################################
         # size of the latent space
-        self.z_dim = 10  # feel free to change this
+        self.z_dim = 32  # feel free to change this
 
         # you may declare and pass arguments below
         # for your encoder & decoder
@@ -35,8 +35,7 @@ class MyBarVAE(nn.Module):
         #####################################
 
         # location to save model
-        self.filepath = os.path.join('models/saved/',
-                                     self.__repr__())
+        self.filepath = os.path.join('models/saved/', self.__repr__())
 
     def __repr__(self):
         """
@@ -71,13 +70,9 @@ class MyBarVAE(nn.Module):
 
         # sample from output distribution
         z_tilde = z_dist.rsample()
-
         #####################################
         # COMPLETE THE CODE BLOCK BELOW
         #####################################
-        # reparameterize
-        z_tilde = z_tilde.mul(z_dist.stddev).add_(z_dist.mean)
-
         # compute prior distribution
         # should also be a torch.distributions object
         prior_dist = distributions.Normal(torch.zeros(self.z_dim), torch.ones(self.z_dim))
@@ -108,8 +103,7 @@ class MyBarVAE(nn.Module):
         :return:
         """
         if cpu:
-            self.load_state_dict(
-                torch.load(
+            self.load_state_dict(torch.load(
                     self.filepath,
                     map_location=lambda storage,
                     loc: storage
