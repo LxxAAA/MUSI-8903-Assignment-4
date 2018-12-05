@@ -195,7 +195,7 @@ class VAETrainer(object):
         # compute a mean cross entropy loss
         vocab_size = int(weights.size()[-1])
         weighting = torch.ones([vocab_size])
-        weighting[21] = 0.75 # fuck note continuations
+        weighting[21] = 0.9 # fuck note continuations
         loss_fn = nn.NLLLoss(weight=weighting)
         recons_loss = loss_fn(weights.view(-1, weights.size()[-1]), targets.view(-1))
         #####################################
